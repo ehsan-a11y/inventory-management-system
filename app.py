@@ -227,21 +227,8 @@ def login_required(f):
 
 
 # ── Routes ────────────────────────────────────────────────────────────────
-@app.route('/debug')
-def debug():
-    return jsonify({
-        'is_pg': IS_PG,
-        'has_db_url': bool(DATABASE_URL),
-        'on_vercel': _ON_VERCEL,
-        'db_path': DB_PATH,
-        'startup_errors': _startup_errors,
-        'python_version': __import__('sys').version,
-    })
-
 @app.route('/')
 def index():
-    if _startup_errors:
-        return f"<pre style='color:red;padding:20px'>Startup error:\n\n{''.join(_startup_errors)}</pre>", 500
     return render_template('index.html')
 
 
