@@ -9,14 +9,17 @@ app.secret_key = os.environ.get('SECRET_KEY', 'inventory_secret_key_2024')
 
 # ── Database configuration ─────────────────────────────────────────────────
 DATABASE_URL = os.environ.get('DATABASE_URL')
-IS_PG = bool(DATABASE_URL)
+IS_PG = False  # will be set True below if psycopg2 loads OK
 
-if IS_PG:
+_startup_errors = []
+
+if DATABASE_URL:
     try:
         import psycopg2
         import psycopg2.extras
+        IS_PG = True
     except ImportError as e:
-        raise RuntimeError(f"psycopg2 not installed but DATABASE_URL is set: {e}")
+        _startup_errors.append(f"psycopg2 import failed: {e}. Falling back to SQLite.")
 
 # On Vercel filesystem is read-only except /tmp
 _ON_VERCEL = bool(os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV'))
@@ -206,7 +209,11 @@ def init_db():
                 db.insert("INSERT INTO categories (name,description) VALUES (?,?)", (name, desc))
 
 
-init_db()
+try:
+    init_db()
+except Exception as _e:
+    import traceback as _tb
+    _startup_errors.append(_tb.format_exc())
 
 
 # ── Auth helpers ───────────────────────────────────────────────────────────
@@ -220,8 +227,21 @@ def login_required(f):
 
 
 # ── Routes ────────────────────────────────────────────────────────────────
+@app.route('/debug')
+def debug():
+    return jsonify({
+        'is_pg': IS_PG,
+        'has_db_url': bool(DATABASE_URL),
+        'on_vercel': _ON_VERCEL,
+        'db_path': DB_PATH,
+        'startup_errors': _startup_errors,
+        'python_version': __import__('sys').version,
+    })
+
 @app.route('/')
 def index():
+    if _startup_errors:
+        return f"<pre style='color:red;padding:20px'>Startup error:\n\n{''.join(_startup_errors)}</pre>", 500
     return render_template('index.html')
 
 
