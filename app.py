@@ -12,16 +12,17 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 IS_PG = bool(DATABASE_URL)
 
 if IS_PG:
-    import psycopg2
-    import psycopg2.extras
-
-DB_PATH = os.path.join(os.path.dirname(__file__), 'inventory.db')
+    try:
+        import psycopg2
+        import psycopg2.extras
+    except ImportError as e:
+        raise RuntimeError(f"psycopg2 not installed but DATABASE_URL is set: {e}")
 
 # On Vercel filesystem is read-only except /tmp
-if os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV'):
-    LP_UPLOAD = '/tmp/lp_uploads'
-else:
-    LP_UPLOAD = os.path.join(os.path.dirname(__file__), 'lp_uploads')
+_ON_VERCEL = bool(os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV'))
+
+DB_PATH = '/tmp/inventory.db' if _ON_VERCEL else os.path.join(os.path.dirname(__file__), 'inventory.db')
+LP_UPLOAD = '/tmp/lp_uploads' if _ON_VERCEL else os.path.join(os.path.dirname(__file__), 'lp_uploads')
 os.makedirs(LP_UPLOAD, exist_ok=True)
 
 
