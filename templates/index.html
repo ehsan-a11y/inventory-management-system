@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Inventory Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;height:100vh;overflow:hidden}
+
+  /* ── LOGIN ── */
+  #login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#1a2744 0%,#0d3b6e 50%,#1a5276 100%);display:flex;align-items:center;justify-content:center;z-index:9999}
+  .login-box{background:#fff;border-radius:12px;padding:40px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.4)}
+  .login-logo{text-align:center;margin-bottom:24px}
+  .login-logo .icon{font-size:56px;display:block;margin-bottom:8px}
+  .login-logo h2{color:#1a2744;font-size:22px;font-weight:700}
+  .login-logo p{color:#666;font-size:13px;margin-top:4px}
+  .login-box label{display:block;font-size:13px;font-weight:600;color:#444;margin-bottom:5px;margin-top:16px}
+  .login-box input{width:100%;padding:10px 14px;border:1.5px solid #ddd;border-radius:7px;font-size:14px;outline:none;transition:border .2s}
+  .login-box input:focus{border-color:#1a2744}
+  .login-btn{width:100%;margin-top:24px;padding:12px;background:#1a2744;color:#fff;border:none;border-radius:7px;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s}
+  .login-btn:hover{background:#0d3b6e}
+  .login-err{color:#e74c3c;font-size:13px;margin-top:10px;text-align:center;min-height:18px}
+  .login-hint{text-align:center;font-size:12px;color:#999;margin-top:12px}
+
+  /* ── APP SHELL ── */
+  #app{display:none;flex-direction:column;height:100vh}
+
+  /* Header */
+  .header{background:#1a2744;color:#fff;display:flex;align-items:center;padding:0 20px;height:72px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.4)}
+  .header-logo{width:52px;height:52px;background:rgba(255,255,255,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-right:16px;flex-shrink:0}
+  .header-title{font-size:28px;font-weight:800;letter-spacing:0.5px;flex:1;text-shadow:1px 1px 3px rgba(0,0,0,0.3)}
+  .header-right{display:flex;align-items:center;gap:16px}
+  .logout-btn{background:#1565c0;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s;letter-spacing:0.3px}
+  .logout-btn:hover{background:#0d47a1}
+
+  /* Sub-header */
+  .subheader{background:#2c3e6b;color:#d0d9ec;display:flex;align-items:center;justify-content:center;gap:80px;padding:8px 20px;font-size:14px;flex-shrink:0}
+  .subheader span{font-weight:500}
+  .subheader strong{color:#fff}
+
+  /* Body */
+  .body{display:flex;flex:1;overflow:hidden}
+
+  /* Sidebar */
+  .sidebar{width:210px;background:#1b5e50;flex-shrink:0;display:flex;flex-direction:column;overflow-y:auto}
+  .sidebar-logo-wrap{padding:18px 16px 14px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.12)}
+  .sidebar-logo-wrap svg{filter:drop-shadow(0 4px 12px rgba(0,0,0,0.35))}
+  .menu-label{background:#148f77;color:#fff;font-size:17px;font-weight:800;text-align:center;padding:10px 0;letter-spacing:1px}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:13px 20px;color:#d4efdf;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s;border-left:3px solid transparent;text-decoration:none}
+  .nav-item:hover{background:rgba(255,255,255,0.1);color:#fff}
+  .nav-item.active{background:#148f77;color:#fff;border-left-color:#a9dfbf}
+  .nav-item .nav-icon{font-size:19px;width:24px;text-align:center}
+
+  /* Content */
+  .content{flex:1;overflow-y:auto;padding:24px}
+
+  /* Dashboard */
+  .dash-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;max-width:1100px;margin:0 auto}
+  @media(max-width:900px){.dash-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.dash-grid{grid-template-columns:1fr}}
+  .dash-card{border-radius:12px;padding:32px 24px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+  .dash-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.2)}
+  .dash-card .card-icon{font-size:52px;margin-bottom:12px}
+  .dash-card .card-label{font-size:18px;font-weight:700;color:#fff;margin-bottom:8px}
+  .dash-card .card-count{font-size:48px;font-weight:900;color:#fff}
+  .card-employees{background:#37474f}
+  .card-suppliers{background:#6a1b9a}
+  .card-categories{background:#2e7d32}
+  .card-products{background:#0277bd}
+  .card-sales{background:#c62828}
+  .card-shipments{background:#00695c}
+
+  /* Page header */
+  .page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .page-hdr h2{font-size:22px;font-weight:800;color:#1a2744}
+  .page-hdr .page-icon{font-size:28px;margin-right:10px}
+  .add-btn{background:#1a2744;color:#fff;border:none;padding:9px 20px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s}
+  .add-btn:hover{background:#0d3b6e}
+
+  /* Search bar */
+  .search-bar{margin-bottom:16px}
+  .search-bar input{padding:9px 14px;border:1.5px solid #ccc;border-radius:7px;font-size:14px;width:280px;outline:none}
+  .search-bar input:focus{border-color:#1a2744}
+
+  /* Table */
+  .table-wrap{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  thead th{background:#1a2744;color:#fff;padding:12px 14px;text-align:left;font-weight:600;white-space:nowrap}
+  tbody tr{border-bottom:1px solid #f0f0f0;transition:background .1s}
+  tbody tr:hover{background:#f8f9fc}
+  tbody td{padding:11px 14px;color:#333;vertical-align:middle}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+  .badge-green{background:#e8f5e9;color:#2e7d32}
+  .badge-blue{background:#e3f2fd;color:#0277bd}
+  .badge-purple{background:#f3e5f5;color:#6a1b9a}
+  .no-data{text-align:center;padding:40px;color:#aaa;font-size:15px}
+
+  /* Action buttons */
+  .btn-edit{background:#f39c12;color:#fff;border:none;padding:5px 13px;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;margin-right:4px;transition:background .15s}
+  .btn-edit:hover{background:#e67e22}
+  .btn-del{background:#e74c3c;color:#fff;border:none;padding:5px 13px;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s}
+  .btn-del:hover{background:#c0392b}
+
+  /* Modal */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:none;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(2px)}
+  .modal-overlay.open{display:flex}
+  .modal{background:#fff;border-radius:12px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+  .modal-hdr{background:#1a2744;color:#fff;padding:18px 24px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between}
+  .modal-hdr h3{font-size:17px;font-weight:700}
+  .modal-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1}
+  .modal-body{padding:24px}
+  .form-row{margin-bottom:16px}
+  .form-row label{display:block;font-size:13px;font-weight:600;color:#555;margin-bottom:6px}
+  .form-row input,.form-row select,.form-row textarea{width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:14px;outline:none;transition:border .2s;font-family:inherit}
+  .form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:#1a2744}
+  .form-row textarea{height:80px;resize:vertical}
+  .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .modal-footer{padding:16px 24px;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:10px}
+  .btn-cancel{background:#f0f0f0;color:#555;border:none;padding:10px 20px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn-cancel:hover{background:#e0e0e0}
+  .btn-save{background:#1a2744;color:#fff;border:none;padding:10px 24px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s}
+  .btn-save:hover{background:#0d3b6e}
+
+  /* Confirm dialog */
+  .confirm-box{background:#fff;border-radius:12px;padding:32px;width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+  .confirm-box .warn-icon{font-size:48px;margin-bottom:12px}
+  .confirm-box h3{font-size:18px;font-weight:700;color:#1a2744;margin-bottom:8px}
+  .confirm-box p{color:#666;font-size:14px;margin-bottom:24px}
+  .confirm-btns{display:flex;gap:12px;justify-content:center}
+  .btn-confirm-del{background:#e74c3c;color:#fff;border:none;padding:10px 28px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn-confirm-del:hover{background:#c0392b}
+
+  /* Toast */
+  .toast{position:fixed;bottom:30px;right:30px;background:#1a2744;color:#fff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.2);z-index:9999;transform:translateY(20px);opacity:0;transition:all .3s}
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast.success{background:#2e7d32}
+  .toast.error{background:#c62828}
+
+  /* Hidden */
+  .hidden{display:none!important}
+
+  /* ── LOGISTIC PRO SCOPED STYLES ─────────────────────────────────── */
+  .lp-page{font-family:'Inter',system-ui,sans-serif}
+  .sidebar-section-label{color:rgba(255,255,255,0.35);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:12px 20px 4px;margin-top:4px}
+  .sidebar-divider{border:none;border-top:1px solid rgba(255,255,255,0.1);margin:6px 12px}
+
+  /* LP stat cards */
+  .lp-page .lp-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+  .lp-page .lp-stat-card{border-radius:14px;padding:22px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 24px rgba(0,0,0,.1)}
+  .lp-page .lp-stat-card::after{content:'';position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.1);pointer-events:none}
+  .lp-page .lp-stat-card:hover{transform:translateY(-3px);box-shadow:0 8px 40px rgba(0,0,0,.15)}
+  .lp-page .c-total    {background:linear-gradient(135deg,#4361ee,#6366f1)}
+  .lp-page .c-transit  {background:linear-gradient(135deg,#f59e0b,#d97706)}
+  .lp-page .c-delivered{background:linear-gradient(135deg,#10b981,#059669)}
+  .lp-page .c-returned {background:linear-gradient(135deg,#ef4444,#dc2626)}
+  .lp-page .lp-stat-icon{width:52px;height:52px;border-radius:14px;flex-shrink:0;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;backdrop-filter:blur(4px)}
+  .lp-page .lp-stat-val{font-size:32px;font-weight:800;color:#fff;line-height:1}
+  .lp-page .lp-stat-lbl{font-size:12px;color:rgba(255,255,255,.85);margin-top:4px;font-weight:500}
+  .lp-page .lp-stat-arrow{position:absolute;bottom:14px;right:14px;color:rgba(255,255,255,.45);font-size:12px;transition:transform .2s,color .2s}
+  .lp-page .lp-stat-card:hover .lp-stat-arrow{transform:translate(2px,-2px);color:rgba(255,255,255,.8)}
+
+  /* LP charts */
+  .lp-page .lp-charts-grid{display:grid;grid-template-columns:340px 1fr;gap:16px}
+  .lp-page .lp-chart-card{background:#fff;border-radius:14px;padding:22px;box-shadow:0 4px 24px rgba(0,0,0,.07)}
+  .lp-page .lp-chart-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .lp-page .lp-chart-hdr h3{font-size:15px;font-weight:700;color:#1e293b}
+  .lp-page .lp-chart-hdr p{font-size:12px;color:#94a3b8;margin-top:2px}
+  .lp-page .lp-chart-badge{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:#e8edff;color:#4361ee}
+  .lp-page .lp-chart-wrap{position:relative;height:270px}
+
+  /* LP page header */
+  .lp-page .lp-page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap}
+  .lp-page .lp-page-hdr h2{font-size:24px;font-weight:800;color:#1e293b}
+  .lp-page .lp-page-hdr p{font-size:13px;color:#94a3b8;margin-top:2px}
+  .lp-page .lp-add-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,#4361ee,#6366f1);color:#fff;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(67,97,238,.35);transition:all .2s;min-height:44px}
+  .lp-page .lp-add-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(67,97,238,.45)}
+
+  /* LP form card */
+  .lp-page .lp-form-card{background:#fff;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,.07);margin-bottom:20px;display:none;overflow:hidden}
+  .lp-page .lp-form-card.open{display:block;animation:lpSlideDown .25s ease}
+  @keyframes lpSlideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+  .lp-page .lp-form-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;background:linear-gradient(135deg,#4361ee,#6366f1)}
+  .lp-page .lp-form-hdr h3{font-size:15px;font-weight:700;color:#fff}
+  .lp-page .lp-form-hdr p{font-size:12px;color:rgba(255,255,255,.7);margin-top:1px}
+  .lp-page .lp-form-close{background:rgba(255,255,255,.15);border:none;cursor:pointer;color:#fff;font-size:14px;padding:6px 8px;border-radius:8px;transition:background .2s;width:36px;height:36px;display:flex;align-items:center;justify-content:center}
+  .lp-page .lp-form-close:hover{background:rgba(255,255,255,.25)}
+  .lp-page .lp-form-body{padding:22px 24px}
+  .lp-page .lp-form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+  .lp-page .lp-form-group{display:flex;flex-direction:column;gap:6px}
+  .lp-page .lp-form-group label{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px}
+  .lp-page .lp-form-group input,.lp-page .lp-form-group select{padding:10px 12px;border:1.5px solid #eaedf5;border-radius:10px;font-size:14px;font-family:inherit;color:#1e293b;background:#fafbff;outline:none;transition:border-color .2s,box-shadow .2s;min-height:44px}
+  .lp-page .lp-form-group input:focus,.lp-page .lp-form-group select:focus{border-color:#4361ee;background:#fff;box-shadow:0 0 0 3px rgba(67,97,238,.1)}
+
+  /* LP file upload */
+  .lp-page .lp-file-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+  .lp-page .lp-file-item{display:flex;align-items:center;gap:8px;flex:1;min-width:200px}
+  .lp-page .lp-file-lbl{display:flex;align-items:center;gap:9px;flex:1;padding:10px 14px;border:1.5px dashed #c8d0e7;border-radius:10px;cursor:pointer;font-size:13px;color:#94a3b8;background:#fafbff;transition:all .2s;min-height:44px}
+  .lp-page .lp-file-lbl:hover{border-color:#4361ee;color:#4361ee;background:#e8edff}
+  .lp-page .lp-file-lbl input{display:none}
+  .lp-page .lp-file-lbl .fname{font-size:12px;color:#4361ee;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px}
+  .lp-page .lp-file-preview{display:none;flex-shrink:0;width:44px;height:44px;border-radius:10px;border:none;background:#e8edff;color:#4361ee;font-size:14px;cursor:pointer;align-items:center;justify-content:center;transition:all .2s}
+  .lp-page .lp-file-preview:hover{background:#4361ee;color:#fff}
+
+  /* LP buttons */
+  .lp-page .lp-btn-row{display:flex;gap:10px;flex-wrap:wrap}
+  .lp-page .lp-btn{padding:10px 20px;border-radius:10px;border:none;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:all .18s;min-height:44px}
+  .lp-page .lp-btn-save  {background:linear-gradient(135deg,#4361ee,#6366f1);color:#fff;box-shadow:0 4px 14px rgba(67,97,238,.35)}
+  .lp-page .lp-btn-update{background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 4px 14px rgba(16,185,129,.3)}
+  .lp-page .lp-btn-delete{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;box-shadow:0 4px 14px rgba(239,68,68,.3)}
+  .lp-page .lp-btn-clear {background:#f1f5f9;color:#64748b;border:1.5px solid #eaedf5}
+  .lp-page .lp-btn-clear:hover{background:#e8edff;color:#4361ee}
+  .lp-page .lp-btn:disabled{opacity:.38;cursor:not-allowed;pointer-events:none}
+
+  /* LP table */
+  .lp-page .lp-table-card{background:#fff;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,.07);overflow:hidden}
+  .lp-page .lp-table-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eaedf5;flex-wrap:wrap;gap:10px}
+  .lp-page .lp-table-hdr h3{font-size:15px;font-weight:700;color:#1e293b}
+  .lp-page .lp-tbl-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .lp-page .lp-filter-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 12px;border-radius:20px;background:#e8edff;color:#4361ee;font-size:12px;font-weight:600}
+  .lp-page .lp-filter-pill button{background:none;border:none;cursor:pointer;color:#4361ee;font-size:13px;padding:0 2px;line-height:1;display:flex;align-items:center;transition:color .15s}
+  .lp-page .lp-filter-pill button:hover{color:#ef4444}
+  .lp-page .lp-rec-count{font-size:12px;color:#94a3b8;font-weight:600;background:#f1f5f9;padding:5px 12px;border-radius:20px}
+  .lp-page .lp-tbl-wrap{overflow-x:auto}
+  .lp-page table{width:100%;border-collapse:collapse;min-width:520px}
+  .lp-page table thead th{background:#f8fafd;padding:11px 16px;text-align:left;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #eaedf5;white-space:nowrap}
+  .lp-page table tbody td{padding:13px 16px;font-size:13.5px;color:#374151;border-bottom:1px solid #f8f9fc}
+  .lp-page table tbody tr{cursor:pointer;transition:background .14s}
+  .lp-page table tbody tr:last-child td{border-bottom:none}
+  .lp-page table tbody tr:hover td{background:#f8fafd}
+  .lp-page table tbody tr.lp-selected td{background:#eef1ff}
+  .lp-page table tbody tr.lp-selected td:first-child{border-left:3px solid #4361ee;padding-left:13px}
+  .lp-page .lp-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
+  .lp-page .lp-badge::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0}
+  .lp-page .lp-badge-transit  {background:#fef3c7;color:#92400e}.lp-page .lp-badge-transit::before{background:#f59e0b}
+  .lp-page .lp-badge-delivered{background:#d1fae5;color:#065f46}.lp-page .lp-badge-delivered::before{background:#10b981}
+  .lp-page .lp-badge-returned {background:#fee2e2;color:#991b1b}.lp-page .lp-badge-returned::before{background:#ef4444}
+  .lp-page .lp-track-btn{background:#e8edff;border:none;cursor:pointer;width:36px;height:36px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#4361ee;font-size:14px;transition:all .15s}
+  .lp-page .lp-track-btn:hover{background:#4361ee;color:#fff;transform:scale(1.1)}
+  .lp-page .lp-empty{text-align:center;padding:56px 20px;color:#94a3b8}
+  .lp-page .lp-empty-icon{width:72px;height:72px;border-radius:50%;background:#e8edff;color:#4361ee;font-size:30px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+  .lp-page .lp-empty p{font-size:14px;font-weight:500}
+  .lp-page .lp-empty small{font-size:12px;color:#cbd5e1;display:block;margin-top:4px}
+  @media(max-width:900px){.lp-page .lp-charts-grid{grid-template-columns:1fr}.lp-page .lp-form-grid{grid-template-columns:repeat(2,1fr)}.lp-page .lp-stats-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:500px){.lp-page .lp-stats-grid{grid-template-columns:1fr}.lp-page .lp-form-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <span class="icon">📦</span>
+      <h2>Inventory Management</h2>
+      <p>Please sign in to continue</p>
+    </div>
+    <label>Username</label>
+    <input id="login-user" type="text" placeholder="Enter username" value="admin"/>
+    <label>Password</label>
+    <input id="login-pass" type="password" placeholder="Enter password" value="admin123"/>
+    <div class="login-err" id="login-err"></div>
+    <button class="login-btn" onclick="doLogin()">Login</button>
+    <div class="login-hint">Default: admin / admin123</div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo">📦</div>
+    <div class="header-title">Inventory Management System</div>
+    <div class="header-right">
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- Subheader -->
+  <div class="subheader">
+    <span>Welcome <strong id="hdr-user">Admin</strong></span>
+    <span>Date: <strong id="hdr-date"></strong></span>
+    <span>Time: <strong id="hdr-time"></strong></span>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-logo-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="120" height="120">
+          <defs>
+            <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#1a2e6e"/>
+              <stop offset="100%" stop-color="#00695c"/>
+            </linearGradient>
+            <linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#4fc3f7"/>
+              <stop offset="100%" stop-color="#00bfa5"/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <!-- Outer ring -->
+          <circle cx="80" cy="80" r="76" fill="url(#lg1)" opacity="0.95"/>
+          <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+          <!-- 3D Cube — top face -->
+          <polygon points="80,26 118,48 80,70 42,48" fill="rgba(255,255,255,0.96)"/>
+          <!-- 3D Cube — left face -->
+          <polygon points="42,48 80,70 80,104 42,82" fill="rgba(255,255,255,0.5)"/>
+          <!-- 3D Cube — right face -->
+          <polygon points="118,48 80,70 80,104 118,82" fill="rgba(255,255,255,0.72)"/>
+          <!-- Bar chart bars on top face (analytics feel) -->
+          <rect x="55" y="36" width="6" height="9"  rx="1.5" fill="url(#lg2)" opacity="0.9"/>
+          <rect x="66" y="30" width="6" height="15" rx="1.5" fill="url(#lg2)" opacity="0.9"/>
+          <rect x="77" y="34" width="6" height="11" rx="1.5" fill="url(#lg2)" opacity="0.9"/>
+          <rect x="88" y="27" width="6" height="18" rx="1.5" fill="url(#lg2)" opacity="0.9"/>
+          <!-- Upward trend arrow on right face -->
+          <polyline points="96,95 104,82 112,88" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <polygon points="112,88 108,79 116,81" fill="rgba(255,255,255,0.55)"/>
+          <!-- Text: IMS -->
+          <text x="80" y="124" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="17" font-weight="900" fill="white" letter-spacing="5" opacity="0.97">IMS</text>
+          <!-- Tagline -->
+          <text x="80" y="139" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.45)" letter-spacing="2.5">INVENTORY</text>
+        </svg>
+      </div>
+      <div class="menu-label">Menu</div>
+      <div class="nav-item active" id="nav-dashboard" onclick="navigate('dashboard')">
+        <span class="nav-icon">🏠</span> Dashboard
+      </div>
+      <div class="nav-item" id="nav-employee" onclick="navigate('employee')">
+        <span class="nav-icon">👤</span> Employee
+      </div>
+      <div class="nav-item" id="nav-supplier" onclick="navigate('supplier')">
+        <span class="nav-icon">🤝</span> Supplier
+      </div>
+      <div class="nav-item" id="nav-category" onclick="navigate('category')">
+        <span class="nav-icon">⚙️</span> Category
+      </div>
+      <div class="nav-item" id="nav-product" onclick="navigate('product')">
+        <span class="nav-icon">📦</span> Product
+      </div>
+      <div class="nav-item" id="nav-sales" onclick="navigate('sales')">
+        <span class="nav-icon">📊</span> Sales
+      </div>
+      <div class="nav-item" id="nav-shipment" onclick="navigate('shipment')">
+        <span class="nav-icon"><i class="fa fa-truck" style="font-size:15px"></i></span> Shipments
+      </div>
+      <div class="nav-item" id="nav-exit" onclick="doLogout()" style="margin-top:auto">
+        <span class="nav-icon">🚪</span> Exit
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard">
+        <div class="dash-grid">
+          <div class="dash-card card-employees" onclick="navigate('employee')">
+            <div class="card-icon">👥</div>
+            <div class="card-label">Total Employees</div>
+            <div class="card-count" id="cnt-employees">0</div>
+          </div>
+          <div class="dash-card card-suppliers" onclick="navigate('supplier')">
+            <div class="card-icon">🤝</div>
+            <div class="card-label">Total Suppliers</div>
+            <div class="card-count" id="cnt-suppliers">0</div>
+          </div>
+          <div class="dash-card card-categories" onclick="navigate('category')">
+            <div class="card-icon">🗂️</div>
+            <div class="card-label">Total Categories</div>
+            <div class="card-count" id="cnt-categories">0</div>
+          </div>
+          <div class="dash-card card-products" onclick="navigate('product')">
+            <div class="card-icon">📦</div>
+            <div class="card-label">Total Products</div>
+            <div class="card-count" id="cnt-products">0</div>
+          </div>
+          <div class="dash-card card-sales" onclick="navigate('sales')">
+            <div class="card-icon">📈</div>
+            <div class="card-label">Total Sales</div>
+            <div class="card-count" id="cnt-sales">0</div>
+          </div>
+          <div class="dash-card card-shipments" onclick="navigate('shipment')">
+            <div class="card-icon">🚚</div>
+            <div class="card-label">Total Shipments</div>
+            <div class="card-count" id="cnt-shipments">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMPLOYEE -->
+      <div id="page-employee" class="hidden">
+        <div class="page-hdr">
+          <h2><span class="page-icon">👤</span>Employee Management</h2>
+          <button class="add-btn" onclick="openModal('employee')">➕ Add Employee</button>
+        </div>
+        <div class="search-bar">
+          <input type="text" id="search-employee" placeholder="🔍 Search employees..." oninput="filterTable('employee')"/>
+        </div>
+        <div class="table-wrap">
+          <table id="tbl-employee">
+            <thead>
+              <tr>
+                <th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>Position</th><th>Salary</th><th>Added</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-employee"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUPPLIER -->
+      <div id="page-supplier" class="hidden">
+        <div class="page-hdr">
+          <h2><span class="page-icon">🤝</span>Supplier Management</h2>
+          <button class="add-btn" onclick="openModal('supplier')">➕ Add Supplier</button>
+        </div>
+        <div class="search-bar">
+          <input type="text" id="search-supplier" placeholder="🔍 Search suppliers..." oninput="filterTable('supplier')"/>
+        </div>
+        <div class="table-wrap">
+          <table id="tbl-supplier">
+            <thead>
+              <tr>
+                <th>#</th><th>Name</th><th>Contact</th><th>Email</th><th>Phone</th><th>Address</th><th>Added</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-supplier"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CATEGORY -->
+      <div id="page-category" class="hidden">
+        <div class="page-hdr">
+          <h2><span class="page-icon">⚙️</span>Category Management</h2>
+          <button class="add-btn" onclick="openModal('category')">➕ Add Category</button>
+        </div>
+        <div class="search-bar">
+          <input type="text" id="search-category" placeholder="🔍 Search categories..." oninput="filterTable('category')"/>
+        </div>
+        <div class="table-wrap">
+          <table id="tbl-category">
+            <thead>
+              <tr>
+                <th>#</th><th>Category Name</th><th>Description</th><th>Added</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-category"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PRODUCT -->
+      <div id="page-product" class="hidden">
+        <div class="page-hdr">
+          <h2><span class="page-icon">📦</span>Product Management</h2>
+          <button class="add-btn" onclick="openModal('product')">➕ Add Product</button>
+        </div>
+        <div class="search-bar">
+          <input type="text" id="search-product" placeholder="🔍 Search products..." oninput="filterTable('product')"/>
+        </div>
+        <div class="table-wrap">
+          <table id="tbl-product">
+            <thead>
+              <tr>
+                <th>#</th><th>Product</th><th>Category</th><th>Supplier</th><th>Price</th><th>Qty</th><th>Description</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-product"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SALES -->
+      <div id="page-sales" class="hidden">
+        <div class="page-hdr">
+          <h2><span class="page-icon">📊</span>Sales Management</h2>
+          <button class="add-btn" onclick="openModal('sales')">➕ Add Sale</button>
+        </div>
+        <div class="search-bar">
+          <input type="text" id="search-sales" placeholder="🔍 Search sales..." oninput="filterTable('sales')"/>
+        </div>
+        <div class="table-wrap">
+          <table id="tbl-sales">
+            <thead>
+              <tr>
+                <th>#</th><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Sale Date</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-sales"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SHIPMENT (merged dashboard + management) -->
+      <div id="page-shipment" class="hidden lp-page">
+        <div class="lp-page-hdr">
+          <div>
+            <h2><i class="fa fa-truck" style="margin-right:8px;color:#00897b"></i>Shipments</h2>
+            <p>Overview and management of all shipment records</p>
+          </div>
+          <button class="lp-add-btn" onclick="lpOpenNewForm()">
+            <i class="fa fa-plus"></i> Add Shipment
+          </button>
+        </div>
+
+        <!-- Stats cards -->
+        <div class="lp-stats-grid" style="margin-bottom:20px">
+          <div class="lp-stat-card c-total" onclick="lpGoFilter('','')">
+            <div class="lp-stat-icon"><i class="fa fa-boxes-stacked"></i></div>
+            <div>
+              <div class="lp-stat-val" id="lp-st-total">0</div>
+              <div class="lp-stat-lbl">Total Shipments</div>
+            </div>
+            <i class="fa fa-arrow-up-right lp-stat-arrow"></i>
+          </div>
+          <div class="lp-stat-card c-transit" onclick="lpGoFilter('status','Transit')">
+            <div class="lp-stat-icon"><i class="fa fa-truck"></i></div>
+            <div>
+              <div class="lp-stat-val" id="lp-st-transit">0</div>
+              <div class="lp-stat-lbl">In Transit</div>
+            </div>
+            <i class="fa fa-arrow-up-right lp-stat-arrow"></i>
+          </div>
+          <div class="lp-stat-card c-delivered" onclick="lpGoFilter('status','Delivered')">
+            <div class="lp-stat-icon"><i class="fa fa-circle-check"></i></div>
+            <div>
+              <div class="lp-stat-val" id="lp-st-delivered">0</div>
+              <div class="lp-stat-lbl">Delivered</div>
+            </div>
+            <i class="fa fa-arrow-up-right lp-stat-arrow"></i>
+          </div>
+          <div class="lp-stat-card c-returned" onclick="lpGoFilter('status','Returned')">
+            <div class="lp-stat-icon"><i class="fa fa-rotate-left"></i></div>
+            <div>
+              <div class="lp-stat-val" id="lp-st-returned">0</div>
+              <div class="lp-stat-lbl">Returned</div>
+            </div>
+            <i class="fa fa-arrow-up-right lp-stat-arrow"></i>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="lp-charts-grid" style="margin-bottom:24px">
+          <div class="lp-chart-card">
+            <div class="lp-chart-hdr">
+              <div><h3>Status Breakdown</h3><p>Click a segment to filter records</p></div>
+              <span class="lp-chart-badge"><i class="fa fa-chart-pie" style="margin-right:4px"></i>Donut</span>
+            </div>
+            <div class="lp-chart-wrap"><canvas id="lp-statusChart"></canvas></div>
+          </div>
+          <div class="lp-chart-card">
+            <div class="lp-chart-hdr">
+              <div><h3>Monthly Shipments</h3><p>Click a bar to filter by month</p></div>
+              <span class="lp-chart-badge"><i class="fa fa-chart-bar" style="margin-right:4px"></i>Bar</span>
+            </div>
+            <div class="lp-chart-wrap"><canvas id="lp-monthlyChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Form -->
+        <div class="lp-form-card" id="lp-form-card">
+          <div class="lp-form-hdr">
+            <div>
+              <h3 id="lp-form-title">New Shipment</h3>
+              <p id="lp-form-subtitle">Fill in the details below</p>
+            </div>
+            <button class="lp-form-close" onclick="lpCloseForm()"><i class="fa fa-xmark"></i></button>
+          </div>
+          <div class="lp-form-body">
+            <div class="lp-form-grid">
+              <div class="lp-form-group">
+                <label>Date</label>
+                <input type="date" id="lp-f-date"/>
+              </div>
+              <div class="lp-form-group">
+                <label>AWB No.</label>
+                <input type="text" id="lp-f-awb" placeholder="e.g. 1Z999999"/>
+              </div>
+              <div class="lp-form-group">
+                <label>Cost (AED)</label>
+                <input type="number" id="lp-f-cost" placeholder="0.00" step="0.01" min="0"/>
+              </div>
+              <div class="lp-form-group">
+                <label>Status</label>
+                <select id="lp-f-status">
+                  <option value="">— Select Status —</option>
+                  <option value="Transit">Transit</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Returned">Returned</option>
+                </select>
+              </div>
+            </div>
+            <div class="lp-file-row">
+              <div class="lp-file-item">
+                <label class="lp-file-lbl">
+                  <i class="fa fa-paperclip"></i>
+                  <span id="lp-awb-lbl">Attach AWB Document</span>
+                  <input type="file" id="lp-f-awb-file" onchange="lpOnFileChange(this,'lp-awb-lbl','lp-awb-preview','awb')"/>
+                </label>
+                <button class="lp-file-preview" id="lp-awb-preview" onclick="lpPreviewFile('awb')" type="button" title="Preview AWB">
+                  <i class="fa fa-eye"></i>
+                </button>
+              </div>
+              <div class="lp-file-item">
+                <label class="lp-file-lbl">
+                  <i class="fa fa-file-invoice-dollar"></i>
+                  <span id="lp-inv-lbl">Attach Invoice</span>
+                  <input type="file" id="lp-f-inv-file" onchange="lpOnFileChange(this,'lp-inv-lbl','lp-inv-preview','inv')"/>
+                </label>
+                <button class="lp-file-preview" id="lp-inv-preview" onclick="lpPreviewFile('inv')" type="button" title="Preview Invoice">
+                  <i class="fa fa-eye"></i>
+                </button>
+              </div>
+            </div>
+            <div class="lp-btn-row">
+              <button class="lp-btn lp-btn-save"   id="lp-btn-save"   onclick="lpSaveRecord()"><i class="fa fa-floppy-disk"></i> Save</button>
+              <button class="lp-btn lp-btn-update" id="lp-btn-update" onclick="lpUpdateRecord()" disabled><i class="fa fa-pen-to-square"></i> Update</button>
+              <button class="lp-btn lp-btn-delete" id="lp-btn-delete" onclick="lpDeleteRecord()" disabled><i class="fa fa-trash"></i> Delete</button>
+              <button class="lp-btn lp-btn-clear"  onclick="lpClearForm()"><i class="fa fa-rotate-right"></i> Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="lp-table-card">
+          <div class="lp-table-hdr">
+            <h3>Shipment Records</h3>
+            <div class="lp-tbl-right">
+              <div class="lp-filter-pill" id="lp-filter-pill" style="display:none">
+                <i class="fa fa-filter" style="font-size:10px"></i>
+                <span id="lp-filter-pill-text"></span>
+                <button onclick="lpClearFilter()" title="Clear filter"><i class="fa fa-xmark"></i></button>
+              </div>
+              <span class="lp-rec-count" id="lp-rec-count">0 records</span>
+            </div>
+          </div>
+          <div class="lp-tbl-wrap">
+            <table>
+              <thead>
+                <tr><th>#</th><th>Date</th><th>AWB No.</th><th>Cost</th><th>Status</th><th>Track</th></tr>
+              </thead>
+              <tbody id="lp-tbl-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /body -->
+</div><!-- /app -->
+
+<!-- ── MODAL ── -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <div class="modal-hdr">
+      <h3 id="modal-title">Add Record</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveRecord()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONFIRM DELETE ── -->
+<div class="modal-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="warn-icon">⚠️</div>
+    <h3>Confirm Delete</h3>
+    <p id="confirm-msg">Are you sure you want to delete this record?</p>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="btn-confirm-del" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────
+let currentPage = 'dashboard';
+let modalEntity = '';
+let editId = null;
+let deleteCallback = null;
+let allData = { employee:[], supplier:[], category:[], product:[], sales:[] };
+let categories = [], suppliers = [], products = [];
+
+// ── LP State ───────────────────────────────────────────────────────────────
+let lpAllRows = [];
+let lpSelectedId = null;
+let lpStatusChart = null, lpMonthChart = null;
+let lpFilterStatus = '', lpFilterMonth = '';
+let lpMonthlyData = [];
+let lpAwbObjectUrl = null, lpInvObjectUrl = null;
+let lpAwbSavedFile = null, lpInvSavedFile = null;
+
+// ── Init ──────────────────────────────────────────────────────────────────
+(async () => {
+  const r = await api('GET', '/api/session');
+  if (r.logged_in) {
+    showApp(r.username);
+  }
+})();
+
+// ── Clock ─────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('hdr-date').textContent = now.toLocaleDateString('en-US', {month:'2-digit',day:'2-digit',year:'numeric'});
+  let h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  document.getElementById('hdr-time').textContent =
+    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${ampm}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Login / Logout ─────────────────────────────────────────────────────────
+async function doLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  document.getElementById('login-err').textContent = '';
+  const r = await api('POST', '/api/login', {username: user, password: pass});
+  if (r.success) {
+    showApp(r.username);
+  } else {
+    document.getElementById('login-err').textContent = r.error || 'Login failed';
+  }
+}
+document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+async function doLogout() {
+  await api('POST', '/api/logout');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showApp(username) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('hdr-user').textContent = username.charAt(0).toUpperCase() + username.slice(1);
+  loadDashboard();
+}
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+const pages = ['dashboard','employee','supplier','category','product','sales','shipment'];
+
+function navigate(page) {
+  pages.forEach(p => {
+    document.getElementById('page-'+p).classList.toggle('hidden', p !== page);
+    document.getElementById('nav-'+p)?.classList.toggle('active', p === page);
+  });
+  currentPage = page;
+  if (page === 'dashboard') loadDashboard();
+  else if (page === 'shipment') { lpLoadData(); lpUpdateDashboard(); }
+  else loadPage(page);
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const r = await api('GET', '/api/dashboard');
+  document.getElementById('cnt-employees').textContent = r.employees;
+  document.getElementById('cnt-suppliers').textContent = r.suppliers;
+  document.getElementById('cnt-categories').textContent = r.categories;
+  document.getElementById('cnt-products').textContent = r.products;
+  document.getElementById('cnt-sales').textContent = r.sales;
+  document.getElementById('cnt-shipments').textContent = r.shipments ?? 0;
+}
+
+// ── Load Pages ────────────────────────────────────────────────────────────
+async function loadPage(entity) {
+  const rows = await api('GET', `/api/${entity === 'sales' ? 'sales' : entity + 's'}`);
+  allData[entity] = rows;
+  if (entity === 'product') {
+    categories = await api('GET', '/api/categories');
+    suppliers = await api('GET', '/api/suppliers');
+  }
+  if (entity === 'sales') {
+    products = await api('GET', '/api/products');
+  }
+  renderTable(entity, rows);
+}
+
+// ── Render Tables ─────────────────────────────────────────────────────────
+function renderTable(entity, rows) {
+  const tbody = document.getElementById('tbody-' + entity);
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="10" class="no-data">No records found.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map((r, i) => rowHtml(entity, r, i+1)).join('');
+}
+
+function rowHtml(entity, r, i) {
+  const actions = `<td>
+    <button class="btn-edit" onclick="openModal('${entity}', ${r.id})">✏️ Edit</button>
+    <button class="btn-del" onclick="askDelete('${entity}', ${r.id})">🗑️ Del</button>
+  </td>`;
+  const date = d => d ? d.split('T')[0].split(' ')[0] : '-';
+  if (entity === 'employee') return `<tr>
+    <td>${i}</td><td><strong>${r.name}</strong></td><td>${r.email||'-'}</td><td>${r.phone||'-'}</td>
+    <td><span class="badge badge-blue">${r.position||'-'}</span></td>
+    <td>$${Number(r.salary||0).toLocaleString()}</td><td>${date(r.created_at)}</td>${actions}</tr>`;
+  if (entity === 'supplier') return `<tr>
+    <td>${i}</td><td><strong>${r.name}</strong></td><td>${r.contact||'-'}</td><td>${r.email||'-'}</td>
+    <td>${r.phone||'-'}</td><td>${r.address||'-'}</td><td>${date(r.created_at)}</td>${actions}</tr>`;
+  if (entity === 'category') return `<tr>
+    <td>${i}</td><td><strong>${r.name}</strong></td><td>${r.description||'-'}</td>
+    <td>${date(r.created_at)}</td>${actions}</tr>`;
+  if (entity === 'product') return `<tr>
+    <td>${i}</td><td><strong>${r.name}</strong></td>
+    <td><span class="badge badge-green">${r.category_name||'-'}</span></td>
+    <td>${r.supplier_name||'-'}</td>
+    <td>$${Number(r.price||0).toFixed(2)}</td>
+    <td><span class="badge ${r.quantity>0?'badge-blue':'badge-purple'}">${r.quantity}</span></td>
+    <td>${r.description||'-'}</td>${actions}</tr>`;
+  if (entity === 'sales') return `<tr>
+    <td>${i}</td><td><strong>${r.product_name||'-'}</strong></td><td>${r.quantity}</td>
+    <td>$${Number(r.unit_price||0).toFixed(2)}</td>
+    <td><strong>$${Number(r.total_price||0).toFixed(2)}</strong></td>
+    <td>${date(r.sale_date)}</td>${actions}</tr>`;
+}
+
+// ── Search / Filter ───────────────────────────────────────────────────────
+function filterTable(entity) {
+  const q = document.getElementById('search-'+entity).value.toLowerCase();
+  const filtered = allData[entity].filter(r =>
+    Object.values(r).some(v => String(v||'').toLowerCase().includes(q))
+  );
+  renderTable(entity, filtered);
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────
+async function openModal(entity, id = null) {
+  modalEntity = entity;
+  editId = id;
+  let record = null;
+  if (id) {
+    record = allData[entity].find(r => r.id === id);
+  }
+  // Pre-load dropdowns if needed
+  if (entity === 'product') {
+    categories = await api('GET', '/api/categories');
+    suppliers = await api('GET', '/api/suppliers');
+  }
+  if (entity === 'sales') {
+    products = await api('GET', '/api/products');
+  }
+  document.getElementById('modal-title').textContent = (id ? '✏️ Edit' : '➕ Add') + ' ' + capitalize(entity);
+  document.getElementById('modal-body').innerHTML = buildForm(entity, record);
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  editId = null; modalEntity = '';
+}
+
+function buildForm(entity, r) {
+  const v = (k, def='') => r ? (r[k] ?? def) : def;
+  if (entity === 'employee') return `
+    <div class="form-row"><label>Full Name *</label><input id="f-name" value="${v('name')}" placeholder="Enter full name"/></div>
+    <div class="form-row-2">
+      <div class="form-row"><label>Email</label><input id="f-email" type="email" value="${v('email')}" placeholder="email@example.com"/></div>
+      <div class="form-row"><label>Phone</label><input id="f-phone" value="${v('phone')}" placeholder="555-0000"/></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-row"><label>Position</label><input id="f-position" value="${v('position')}" placeholder="Job title"/></div>
+      <div class="form-row"><label>Salary ($)</label><input id="f-salary" type="number" min="0" value="${v('salary',0)}"/></div>
+    </div>`;
+  if (entity === 'supplier') return `
+    <div class="form-row"><label>Company Name *</label><input id="f-name" value="${v('name')}" placeholder="Supplier name"/></div>
+    <div class="form-row-2">
+      <div class="form-row"><label>Contact Person</label><input id="f-contact" value="${v('contact')}" placeholder="Name"/></div>
+      <div class="form-row"><label>Email</label><input id="f-email" type="email" value="${v('email')}" placeholder="email@supplier.com"/></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-row"><label>Phone</label><input id="f-phone" value="${v('phone')}" placeholder="555-0000"/></div>
+      <div class="form-row"><label>Address</label><input id="f-address" value="${v('address')}" placeholder="Street address"/></div>
+    </div>`;
+  if (entity === 'category') return `
+    <div class="form-row"><label>Category Name *</label><input id="f-name" value="${v('name')}" placeholder="Enter category name"/></div>
+    <div class="form-row"><label>Description</label><textarea id="f-description" placeholder="Optional description...">${v('description')}</textarea></div>`;
+  if (entity === 'product') {
+    const catOpts = categories.map(c => `<option value="${c.id}" ${r&&r.category_id==c.id?'selected':''}>${c.name}</option>`).join('');
+    const supOpts = suppliers.map(s => `<option value="${s.id}" ${r&&r.supplier_id==s.id?'selected':''}>${s.name}</option>`).join('');
+    return `
+    <div class="form-row"><label>Product Name *</label><input id="f-name" value="${v('name')}" placeholder="Enter product name"/></div>
+    <div class="form-row-2">
+      <div class="form-row"><label>Category</label><select id="f-category_id"><option value="">-- Select --</option>${catOpts}</select></div>
+      <div class="form-row"><label>Supplier</label><select id="f-supplier_id"><option value="">-- Select --</option>${supOpts}</select></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-row"><label>Price ($)</label><input id="f-price" type="number" min="0" step="0.01" value="${v('price',0)}"/></div>
+      <div class="form-row"><label>Quantity</label><input id="f-quantity" type="number" min="0" value="${v('quantity',0)}"/></div>
+    </div>
+    <div class="form-row"><label>Description</label><textarea id="f-description" placeholder="Optional...">${v('description')}</textarea></div>`;
+  }
+  if (entity === 'sales') {
+    const prodOpts = products.map(p => `<option value="${p.id}" ${r&&r.product_id==p.id?'selected':''}>${p.name} (Stock: ${p.quantity})</option>`).join('');
+    const today = r ? (r.sale_date||'').split('T')[0].split(' ')[0] : new Date().toISOString().split('T')[0];
+    return `
+    <div class="form-row"><label>Product *</label><select id="f-product_id"><option value="">-- Select Product --</option>${prodOpts}</select></div>
+    <div class="form-row-2">
+      <div class="form-row"><label>Quantity *</label><input id="f-quantity" type="number" min="1" value="${v('quantity',1)}"/></div>
+      <div class="form-row"><label>Sale Date</label><input id="f-sale_date" type="date" value="${today}"/></div>
+    </div>`;
+  }
+}
+
+async function saveRecord() {
+  const entity = modalEntity;
+  let payload = {};
+  const gv = id => document.getElementById(id)?.value?.trim() ?? '';
+
+  if (entity === 'employee') {
+    if (!gv('f-name')) return showToast('Name is required', 'error');
+    payload = { name: gv('f-name'), email: gv('f-email'), phone: gv('f-phone'), position: gv('f-position'), salary: parseFloat(gv('f-salary'))||0 };
+  } else if (entity === 'supplier') {
+    if (!gv('f-name')) return showToast('Company name is required', 'error');
+    payload = { name: gv('f-name'), contact: gv('f-contact'), email: gv('f-email'), phone: gv('f-phone'), address: gv('f-address') };
+  } else if (entity === 'category') {
+    if (!gv('f-name')) return showToast('Category name is required', 'error');
+    payload = { name: gv('f-name'), description: gv('f-description') };
+  } else if (entity === 'product') {
+    if (!gv('f-name')) return showToast('Product name is required', 'error');
+    payload = { name: gv('f-name'), category_id: gv('f-category_id')||null, supplier_id: gv('f-supplier_id')||null, price: parseFloat(gv('f-price'))||0, quantity: parseInt(gv('f-quantity'))||0, description: gv('f-description') };
+  } else if (entity === 'sales') {
+    if (!gv('f-product_id')) return showToast('Please select a product', 'error');
+    payload = { product_id: gv('f-product_id'), quantity: parseInt(gv('f-quantity'))||1, sale_date: gv('f-sale_date') };
+  }
+
+  const url = editId ? `/api/${entity === 'sales' ? 'sales' : entity+'s'}/${editId}` : `/api/${entity === 'sales' ? 'sales' : entity+'s'}`;
+  const method = editId ? 'PUT' : 'POST';
+  const r = await api(method, url, payload);
+  if (r.success) {
+    closeModal();
+    loadPage(entity);
+    if (currentPage === 'dashboard') loadDashboard();
+    else loadDashboard();
+    showToast(`${capitalize(entity)} ${editId ? 'updated' : 'added'} successfully!`, 'success');
+  } else {
+    showToast(r.error || 'Save failed', 'error');
+  }
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────
+let pendingDelete = null;
+
+function askDelete(entity, id) {
+  pendingDelete = { entity, id };
+  document.getElementById('confirm-msg').textContent = `Are you sure you want to delete this ${entity}? This cannot be undone.`;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  pendingDelete = null;
+}
+
+async function confirmDelete() {
+  if (!pendingDelete) return;
+  const { entity, id } = pendingDelete;
+  const url = `/api/${entity === 'sales' ? 'sales' : entity+'s'}/${id}`;
+  const r = await api('DELETE', url);
+  closeConfirm();
+  if (r.success) {
+    loadPage(entity);
+    loadDashboard();
+    showToast(`${capitalize(entity)} deleted.`, 'success');
+  } else {
+    showToast('Delete failed', 'error');
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+async function api(method, url, body) {
+  try {
+    const opts = { method, headers: {'Content-Type':'application/json'} };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(url, opts);
+    return await r.json();
+  } catch(e) {
+    return { error: e.message };
+  }
+}
+
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// Close modal on overlay click
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+document.getElementById('confirm-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('confirm-overlay')) closeConfirm();
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// LOGISTIC PRO FUNCTIONS
+// ══════════════════════════════════════════════════════════════════════════
+
+// ── LP Data ───────────────────────────────────────────────────────────────
+async function lpLoadData() {
+  try {
+    const r = await fetch('/api/lp/shipments');
+    lpAllRows = await r.json();
+    localStorage.setItem('lp_v1', JSON.stringify(lpAllRows));
+  } catch {
+    const c = localStorage.getItem('lp_v1');
+    if (c) lpAllRows = JSON.parse(c);
+  }
+  lpRenderTable();
+}
+
+// ── LP Dashboard ──────────────────────────────────────────────────────────
+async function lpUpdateDashboard() {
+  let d;
+  try {
+    const r = await fetch('/api/lp/dashboard');
+    d = await r.json();
+  } catch {
+    const monthly = {};
+    lpAllRows.forEach(r => { if (r.date) { const ym=r.date.slice(0,7); monthly[ym]=(monthly[ym]||0)+1; }});
+    d = {
+      total: lpAllRows.length,
+      transit:   lpAllRows.filter(r=>r.status==='Transit').length,
+      delivered: lpAllRows.filter(r=>r.status==='Delivered').length,
+      returned:  lpAllRows.filter(r=>r.status==='Returned').length,
+      monthly: Object.keys(monthly).sort().map(m=>({month:m,count:monthly[m]}))
+    };
+  }
+  lpAnimateCount('lp-st-total',     d.total);
+  lpAnimateCount('lp-st-transit',   d.transit);
+  lpAnimateCount('lp-st-delivered', d.delivered);
+  lpAnimateCount('lp-st-returned',  d.returned);
+  // Keep main dashboard shipments count in sync
+  const cntEl = document.getElementById('cnt-shipments');
+  if (cntEl) cntEl.textContent = d.total;
+  lpRenderStatusChart(d.transit, d.delivered, d.returned);
+  lpRenderMonthlyChart(d.monthly || []);
+}
+
+function lpAnimateCount(id, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const start = parseInt(el.textContent) || 0;
+  if (start === target) return;
+  const steps = 20, dur = 600, inc = (target - start) / steps;
+  let cur = start, n = 0;
+  const t = setInterval(() => {
+    n++; cur += inc;
+    el.textContent = Math.round(n >= steps ? target : cur);
+    if (n >= steps) clearInterval(t);
+  }, dur / steps);
+}
+
+function lpRenderStatusChart(transit, delivered, returned) {
+  const ctx = document.getElementById('lp-statusChart');
+  if (!ctx) return;
+  if (lpStatusChart) lpStatusChart.destroy();
+  const labels = ['Transit', 'Delivered', 'Returned'];
+  lpStatusChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: [transit, delivered, returned], backgroundColor: ['#f59e0b','#10b981','#ef4444'], borderWidth: 4, borderColor: '#fff', hoverOffset: 10 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
+      onClick: (e, els) => { if (els.length) lpGoFilter('status', labels[els[0].index]); },
+      onHover: (e) => { e.native.target.style.cursor = 'pointer'; },
+      plugins: {
+        legend: { position:'bottom', labels:{ font:{size:12}, padding:16, usePointStyle:true } },
+        datalabels: { color:'#fff', font:{weight:'bold',size:13}, formatter: v => v>0 ? v : '' }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+function lpRenderMonthlyChart(monthly) {
+  lpMonthlyData = monthly;
+  const ctx = document.getElementById('lp-monthlyChart');
+  if (!ctx) return;
+  if (lpMonthChart) lpMonthChart.destroy();
+  const labels = monthly.map(m => {
+    const [y, mo] = m.month.split('-');
+    return new Date(+y, +mo-1).toLocaleString('default', {month:'short', year:'2-digit'});
+  });
+  const values = monthly.map(m => m.count);
+  lpMonthChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Shipments', data: values,
+        backgroundColor: (ctx) => {
+          const g = ctx.chart.ctx.createLinearGradient(0,0,0,270);
+          g.addColorStop(0,'rgba(67,97,238,.9)'); g.addColorStop(1,'rgba(99,102,241,.4)');
+          return g;
+        },
+        borderColor:'#4361ee', borderWidth:0, borderRadius:8, borderSkipped:false, hoverBackgroundColor:'#4361ee'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, layout:{padding:{top:30}},
+      onClick: (e, els) => { if (els.length) lpGoFilter('month', lpMonthlyData[els[0].index].month); },
+      onHover: (e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
+      plugins: {
+        legend: { display:false },
+        datalabels: { anchor:'end', align:'top', color:'#64748b', font:{weight:'700',size:12}, formatter: v=>v }
+      },
+      scales: {
+        y: { beginAtZero:true, ticks:{precision:0,color:'#94a3b8'}, grid:{color:'#f1f5f9'}, border:{dash:[4,4]} },
+        x: { ticks:{color:'#94a3b8'}, grid:{display:false} }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+// ── LP Filter ─────────────────────────────────────────────────────────────
+function lpGoFilter(type, value) {
+  lpFilterStatus = type === 'status' ? value : '';
+  lpFilterMonth  = type === 'month'  ? value : '';
+  // If already on shipment page, just re-render; otherwise navigate (which loads data)
+  if (currentPage === 'shipment') {
+    lpRenderTable();
+  } else {
+    navigate('shipment');
+  }
+}
+function lpClearFilter() {
+  lpFilterStatus = ''; lpFilterMonth = '';
+  lpRenderTable();
+}
+
+// ── LP Table ──────────────────────────────────────────────────────────────
+function lpRenderTable() {
+  const tbody = document.getElementById('lp-tbl-body');
+  if (!tbody) return;
+  let rows = lpAllRows;
+  if (lpFilterStatus) rows = rows.filter(r => r.status === lpFilterStatus);
+  if (lpFilterMonth)  rows = rows.filter(r => r.date && r.date.slice(0,7) === lpFilterMonth);
+
+  const pill = document.getElementById('lp-filter-pill');
+  const pillTxt = document.getElementById('lp-filter-pill-text');
+  if (lpFilterStatus) { pillTxt.textContent = lpFilterStatus; pill.style.display = 'inline-flex'; }
+  else if (lpFilterMonth) {
+    const [y,m] = lpFilterMonth.split('-');
+    pillTxt.textContent = new Date(+y,+m-1).toLocaleString('default',{month:'long',year:'numeric'});
+    pill.style.display = 'inline-flex';
+  } else { pill.style.display = 'none'; }
+
+  document.getElementById('lp-rec-count').textContent = rows.length + ' record' + (rows.length!==1?'s':'');
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="lp-empty">
+      <div class="lp-empty-icon"><i class="fa fa-box-open"></i></div>
+      <p>${lpAllRows.length ? 'No records match this filter.' : 'No shipments yet'}</p>
+      <small>${lpAllRows.length ? 'Clear the filter to see all records.' : 'Click Add Shipment to get started.'}</small>
+    </div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map((r, i) => {
+    const sk = (r.status||'').toLowerCase();
+    const cost = r.cost != null ? 'AED ' + parseFloat(r.cost).toFixed(2) : '—';
+    const sel  = lpSelectedId === r.id ? ' lp-selected' : '';
+    return `<tr class="${sel}" onclick="lpSelectRow(${r.id})">
+      <td><span style="color:#94a3b8;font-weight:600">${i+1}</span></td>
+      <td>${r.date||'—'}</td>
+      <td><strong>${r.awb_no||'—'}</strong></td>
+      <td><strong>${cost}</strong></td>
+      <td><span class="lp-badge lp-badge-${sk}">${r.status||'—'}</span></td>
+      <td><button class="lp-track-btn" onclick="lpTrack(event,'${r.awb_no||''}')" title="Track"><i class="fa fa-location-dot"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+function lpSelectRow(id) {
+  lpSelectedId = id;
+  const r = lpAllRows.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('lp-form-title').textContent = 'Edit Shipment';
+  document.getElementById('lp-form-subtitle').textContent = 'AWB: ' + (r.awb_no||'—');
+  document.getElementById('lp-f-date').value   = r.date   || '';
+  document.getElementById('lp-f-awb').value    = r.awb_no || '';
+  document.getElementById('lp-f-cost').value   = r.cost != null ? r.cost : '';
+  document.getElementById('lp-f-status').value = r.status || '';
+
+  const awbTxt = document.getElementById('lp-awb-lbl');
+  const invTxt = document.getElementById('lp-inv-lbl');
+  if (r.awb_file)     { awbTxt.textContent=r.awb_file;     awbTxt.classList.add('fname'); } else { awbTxt.textContent='Attach AWB Document'; awbTxt.classList.remove('fname'); }
+  if (r.invoice_file) { invTxt.textContent=r.invoice_file; invTxt.classList.add('fname'); } else { invTxt.textContent='Attach Invoice'; invTxt.classList.remove('fname'); }
+  lpAwbSavedFile = r.awb_file || null;
+  lpInvSavedFile = r.invoice_file || null;
+  document.getElementById('lp-awb-preview').style.display = r.awb_file ? 'flex' : 'none';
+  document.getElementById('lp-inv-preview').style.display = r.invoice_file ? 'flex' : 'none';
+
+  document.getElementById('lp-btn-save').disabled   = true;
+  document.getElementById('lp-btn-update').disabled = false;
+  document.getElementById('lp-btn-delete').disabled = false;
+  document.getElementById('lp-form-card').classList.add('open');
+  document.getElementById('lp-form-card').scrollIntoView({behavior:'smooth',block:'nearest'});
+  lpRenderTable();
+}
+
+function lpTrack(e, awb) {
+  e.stopPropagation();
+  if (!awb) { showToast('No AWB number for this shipment.', 'error'); return; }
+  window.open('https://parcelsapp.com/en/tracking/' + encodeURIComponent(awb), '_blank');
+}
+
+// ── LP Form ───────────────────────────────────────────────────────────────
+function lpOpenNewForm() {
+  lpSelectedId = null;
+  lpClearForm();
+  document.getElementById('lp-f-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('lp-form-title').textContent = 'New Shipment';
+  document.getElementById('lp-form-subtitle').textContent = 'Fill in the details below';
+  document.getElementById('lp-btn-save').disabled   = false;
+  document.getElementById('lp-btn-update').disabled = true;
+  document.getElementById('lp-btn-delete').disabled = true;
+  document.getElementById('lp-form-card').classList.add('open');
+  document.getElementById('lp-form-card').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function lpCloseForm() {
+  document.getElementById('lp-form-card').classList.remove('open');
+  lpSelectedId = null;
+  lpRenderTable();
+}
+
+function lpClearForm() {
+  ['lp-f-date','lp-f-awb','lp-f-cost','lp-f-status'].forEach(id => { document.getElementById(id).value=''; });
+  document.getElementById('lp-f-awb-file').value = '';
+  document.getElementById('lp-f-inv-file').value = '';
+  document.getElementById('lp-awb-lbl').textContent = 'Attach AWB Document';
+  document.getElementById('lp-inv-lbl').textContent = 'Attach Invoice';
+  document.getElementById('lp-awb-lbl').classList.remove('fname');
+  document.getElementById('lp-inv-lbl').classList.remove('fname');
+  if (lpAwbObjectUrl) { URL.revokeObjectURL(lpAwbObjectUrl); lpAwbObjectUrl = null; }
+  if (lpInvObjectUrl) { URL.revokeObjectURL(lpInvObjectUrl); lpInvObjectUrl = null; }
+  lpAwbSavedFile = null; lpInvSavedFile = null;
+  document.getElementById('lp-awb-preview').style.display = 'none';
+  document.getElementById('lp-inv-preview').style.display = 'none';
+}
+
+function lpOnFileChange(input, lblId, previewId, type) {
+  const el  = document.getElementById(lblId);
+  const btn = document.getElementById(previewId);
+  const isAwb = type === 'awb';
+  if (isAwb && lpAwbObjectUrl) { URL.revokeObjectURL(lpAwbObjectUrl); lpAwbObjectUrl = null; }
+  if (!isAwb && lpInvObjectUrl) { URL.revokeObjectURL(lpInvObjectUrl); lpInvObjectUrl = null; }
+  if (input.files[0]) {
+    el.textContent = input.files[0].name; el.classList.add('fname');
+    const url = URL.createObjectURL(input.files[0]);
+    if (isAwb) lpAwbObjectUrl = url; else lpInvObjectUrl = url;
+    btn.style.display = 'flex';
+  } else {
+    el.textContent = isAwb ? 'Attach AWB Document' : 'Attach Invoice';
+    el.classList.remove('fname'); btn.style.display = 'none';
+  }
+}
+
+function lpPreviewFile(type) {
+  const isAwb = type === 'awb';
+  const url = isAwb
+    ? (lpAwbObjectUrl || (lpAwbSavedFile ? '/lp_uploads/' + lpAwbSavedFile : null))
+    : (lpInvObjectUrl || (lpInvSavedFile ? '/lp_uploads/' + lpInvSavedFile : null));
+  if (url) window.open(url, '_blank');
+  else showToast('No file to preview.', 'error');
+}
+
+function lpBuildFD() {
+  const fd = new FormData();
+  fd.append('date',   document.getElementById('lp-f-date').value);
+  fd.append('awb_no', document.getElementById('lp-f-awb').value.trim());
+  fd.append('cost',   document.getElementById('lp-f-cost').value);
+  fd.append('status', document.getElementById('lp-f-status').value);
+  const af = document.getElementById('lp-f-awb-file').files[0];
+  const iv = document.getElementById('lp-f-inv-file').files[0];
+  if (af) fd.append('awb_file', af);
+  if (iv) fd.append('invoice_file', iv);
+  return fd;
+}
+
+function lpValidate() {
+  const awb = document.getElementById('lp-f-awb').value.trim();
+  if (!awb) { showToast('AWB No. is required.', 'error'); return false; }
+  const dup = lpAllRows.find(r => r.awb_no === awb && r.id !== lpSelectedId);
+  if (dup) { showToast('AWB No. "'+awb+'" already exists.', 'error'); return false; }
+  if (!document.getElementById('lp-f-status').value) { showToast('Please select a status.', 'error'); return false; }
+  return true;
+}
+
+// ── LP CRUD ───────────────────────────────────────────────────────────────
+async function lpSaveRecord() {
+  if (!lpValidate()) return;
+  try {
+    const res  = await fetch('/api/lp/shipments', { method:'POST', body:lpBuildFD() });
+    const data = await res.json();
+    if (data.success) {
+      lpAllRows.unshift(data.record);
+      localStorage.setItem('lp_v1', JSON.stringify(lpAllRows));
+      lpCloseForm(); lpRenderTable(); lpUpdateDashboard();
+      showToast('Shipment saved successfully!', 'success');
+    } else { showToast(data.error || 'Save failed.', 'error'); }
+  } catch { showToast('Save failed. Please try again.', 'error'); }
+}
+
+async function lpUpdateRecord() {
+  const sid = lpSelectedId;
+  if (!sid || !lpValidate()) return;
+  try {
+    const res  = await fetch('/api/lp/shipments/' + sid, { method:'PUT', body:lpBuildFD() });
+    const data = await res.json();
+    if (data.success) {
+      const idx = lpAllRows.findIndex(r => r.id === sid);
+      if (idx !== -1) lpAllRows[idx] = data.record;
+      localStorage.setItem('lp_v1', JSON.stringify(lpAllRows));
+      lpSelectedId = null; lpCloseForm(); lpRenderTable(); lpUpdateDashboard();
+      showToast('Shipment updated!', 'success');
+    } else { showToast(data.error || 'Update failed.', 'error'); }
+  } catch { showToast('Update failed. Please try again.', 'error'); }
+}
+
+async function lpDeleteRecord() {
+  const sid = lpSelectedId;
+  if (!sid) return;
+  if (!confirm('Delete this shipment? This cannot be undone.')) return;
+  try {
+    await fetch('/api/lp/shipments/' + sid, { method:'DELETE' });
+    lpAllRows = lpAllRows.filter(r => r.id !== sid);
+    localStorage.setItem('lp_v1', JSON.stringify(lpAllRows));
+    lpSelectedId = null; lpCloseForm(); lpRenderTable(); lpUpdateDashboard();
+    showToast('Shipment deleted.', 'success');
+  } catch { showToast('Delete failed.', 'error'); }
+}
+</script>
+</body>
+</html>
