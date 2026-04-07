@@ -782,9 +782,13 @@ async function loadDashboard() {
   document.getElementById('cnt-shipments').textContent = r.shipments ?? 0;
 }
 
+// ── Entity → API path helper ──────────────────────────────────────────────
+const _PLURAL = { category: 'categories', employee: 'employees', supplier: 'suppliers', product: 'products', sales: 'sales' };
+function apiPath(entity) { return _PLURAL[entity] || (entity + 's'); }
+
 // ── Load Pages ────────────────────────────────────────────────────────────
 async function loadPage(entity) {
-  const rows = await api('GET', `/api/${entity === 'sales' ? 'sales' : entity + 's'}`);
+  const rows = await api('GET', `/api/${apiPath(entity)}`);
   allData[entity] = rows;
   if (entity === 'product') {
     categories = await api('GET', '/api/categories');
@@ -945,7 +949,7 @@ async function saveRecord() {
     payload = { product_id: gv('f-product_id'), quantity: parseInt(gv('f-quantity'))||1, sale_date: gv('f-sale_date') };
   }
 
-  const url = editId ? `/api/${entity === 'sales' ? 'sales' : entity+'s'}/${editId}` : `/api/${entity === 'sales' ? 'sales' : entity+'s'}`;
+  const url = editId ? `/api/${apiPath(entity)}/${editId}` : `/api/${apiPath(entity)}`;
   const method = editId ? 'PUT' : 'POST';
   const r = await api(method, url, payload);
   if (r.success) {
@@ -976,7 +980,7 @@ function closeConfirm() {
 async function confirmDelete() {
   if (!pendingDelete) return;
   const { entity, id } = pendingDelete;
-  const url = `/api/${entity === 'sales' ? 'sales' : entity+'s'}/${id}`;
+  const url = `/api/${apiPath(entity)}/${id}`;
   const r = await api('DELETE', url);
   closeConfirm();
   if (r.success) {
